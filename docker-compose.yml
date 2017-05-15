@@ -1,0 +1,13 @@
+api:
+  image: clojure:lein-alpine
+  volumes:
+    - .:/app
+  links:
+    - mongo
+  command: ring server-headless
+mongo:
+  image: mongo:latest
+  ports:
+    - "27017:27017"
+  environment:
+    - AUTH=no
