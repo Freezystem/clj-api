@@ -8,6 +8,7 @@
                                        encode-str]]
             [ring.util.response :refer [resource-response
                                         response
+                                        not-found
                                         status]])
   (:import (org.bson.types ObjectId)))
 
@@ -38,8 +39,12 @@
 
 (defn get-todo
   "handle todo GET request"
-  [{{id :id} :params :as req}]
-  (response {:todo (mc/find-map-by-id db coll (ObjectId. id))}))
+  [{{id :id} :params}]
+  (let [todo (when (ObjectId/isValid id)
+               (mc/find-map-by-id db coll (ObjectId. id)))]
+    (if (empty? todo)
+      (not-found {:error "not found"})
+      (response {:todo todo}))))
 
 (defn put-todo
   "handle todo PUT request"
@@ -50,5 +55,8 @@
 (defn delete-todo
   "handle todo DELETE request"
   [{{id :id} :params}]
-  (prn "DELETE todo")
-  (str "<h1>Delete todo " id "</h1>"))
+  (let [res (when (ObjectId/isValid id)
+               (mc/remove-by-id db coll (ObjectId. id)))]
+    (if (or (nil? res) (= (.getN res) 0))
+      (not-found {:error "not found"})
+      (response {:message "ok"}))))
