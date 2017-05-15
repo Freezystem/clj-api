@@ -8,7 +8,8 @@
                                        encode-str]]
             [ring.util.response :refer [resource-response
                                         response
-                                        status]]))
+                                        status]])
+  (:import (org.bson.types ObjectId)))
 
 (def ^:private db (mg/get-db (mg/connect) "clj-api"))
 (def ^:private coll "todos")
@@ -26,9 +27,7 @@
 (defn get-todos
   "handle todos GET request"
   [req]
-  (let [todos (mc/find-maps db coll)]
-    (prn "GET todos")
-    (response {:todos todos})))
+  (response {:todos (mc/find-maps db coll)}))
 
 (defn post-todos
   "handle todos POST request"
@@ -39,9 +38,8 @@
 
 (defn get-todo
   "handle todo GET request"
-  [{{id :id} :params}]
-  (prn "GET todo")
-  (str "<h1>Get todo " id "</h1>"))
+  [{{id :id} :params :as req}]
+  (response {:todo (mc/find-map-by-id db coll (ObjectId. id))}))
 
 (defn put-todo
   "handle todo PUT request"
