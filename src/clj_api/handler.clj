@@ -16,8 +16,12 @@
                                              patch-todo
                                              delete-todo]]))
 
+(def ^:private endpoints [{:uri "/users" :methods ["GET" "POST"]}
+                          {:uri "/user/:id" :methods ["GET" "PUT" "PATCH" "DELETE"]}])
+
 (defroutes app-routes
-           (GET "/" [] (response {:message "Welcome to CLJ-API!"}))
+           (GET "/" [] (response {:message "Welcome to CLJ-API!"
+                                  :endpoints endpoints}))
            (context "/todos" []
              (GET "/" [] get-todos)
              (POST "/" [] post-todos))

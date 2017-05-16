@@ -102,7 +102,7 @@
                 (mc/update-by-id db coll (ObjectId. id) {:$set todo}))]
       (if (or (nil? res)
               (= (.getN res) 0))
-        (status {:error "nothing to change"} 400)
+        (status {:error "fail to validate todo"} 400)
         (response {:patched id})))
     (not-found {:error "not found"})))
 
