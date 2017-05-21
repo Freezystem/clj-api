@@ -21,7 +21,7 @@
   [req]
   (str (name (:scheme req)) "://" (get-in req [:headers "host"]) (:uri req)))
 
-(defn objectid?
+(defn object-id?
   "is id a valid mongo ObjectId"
   [id]
   (ObjectId/isValid id))
@@ -32,9 +32,10 @@
 
 (s/def ::label string?)
 (s/def ::completed boolean?)
-(s/def ::owner objectid?)
+(s/def ::owner object-id?)
 (s/def ::todo (s/keys :req-un [::label ::completed]
                       :opt-un [::owner]))
+(s/def ::p-todo (s/keys :opt-un [::label ::completed]))
 
 ;;;;;;;;;;;;;;
 ;; FIXTURES ;;
@@ -74,7 +75,7 @@
 (defn get-todo
   "handle todo GET request"
   [{{id :id} :params}]
-  (let [todo (when (objectid? id)
+  (let [todo (when (object-id? id)
                (mc/find-map-by-id db coll (ObjectId. id)))]
     (if (empty? todo)
       (not-found {:error "not found"})
@@ -83,12 +84,12 @@
 (defn put-todo
   "handle todo PUT request"
   [{{id :id} :params :as req}]
-  (if (objectid? id)
+  (if (object-id? id)
     (let [todo (select-keys (:params req) [:label :completed :owner])
           res (when (s/valid? ::todo todo)
                 (mc/update-by-id db coll (ObjectId. id) todo))]
       (if (or (nil? res)
-              (= (.getN res) 0))
+              (zero? (.getN res)))
         (status {:error "fail to validate todo"} 400)
         (response {:updated id})))
     (not-found {:error "not found"})))
@@ -96,12 +97,13 @@
 (defn patch-todo
   "handle todo PATCH request"
   [{{id :id} :params :as req}]
-  (if (objectid? id)
-    (let [todo (select-keys (:params req) [:label :completed :owner])
-          res (when (not (empty? todo))
+  (if (object-id? id)
+    (let [todo (select-keys (:params req) [:label :completed])
+          res (when (and (not (empty? todo))
+                         (s/valid? ::p-todo todo))
                 (mc/update-by-id db coll (ObjectId. id) {:$set todo}))]
       (if (or (nil? res)
-              (= (.getN res) 0))
+              (zero? (.getN res)))
         (status {:error "fail to validate todo"} 400)
         (response {:patched id})))
     (not-found {:error "not found"})))
@@ -109,9 +111,9 @@
 (defn delete-todo
   "handle todo DELETE request"
   [{{id :id} :params}]
-  (let [res (when (objectid? id)
+  (let [res (when (object-id? id)
               (mc/remove-by-id db coll (ObjectId. id)))]
     (if (or (nil? res)
-            (= (.getN res) 0))
+            (zero? (.getN res)))
       (not-found {:error "not found"})
       (response {:deleted id}))))
