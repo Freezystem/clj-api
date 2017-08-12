@@ -1,7 +1,6 @@
 (ns clj-api.resources.todos
   (:require [monger.core :as mg]
             [monger.collection :as mc]
-            [monger.json :refer :all]
             [clojure.spec.alpha :as s]
             [cheshire.core :refer [generate-string
                                    parse-string]]
